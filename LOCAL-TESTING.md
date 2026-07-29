@@ -145,6 +145,22 @@ unzip -l release/openwork-station-0.1.0.owapp
 1980-01-01: packing is deterministic, so the digest is a function of the
 contents and nothing about the machine that built it.
 
+## What each layer needs
+
+[REQUIREMENTS.md](REQUIREMENTS.md) is the full explainer: what every layer of
+Station needs, what you see when you have it, and what you see when you do not.
+
+The short version:
+
+| Layer | Needs | Without it |
+|---|---|---|
+| Install | nothing | — |
+| Turn on | `OPENAI_API_KEY` | stays at *needs setup* |
+| Listening | macOS microphone permission | island shows **Error** |
+| Noticing opportunities | the two above | — |
+| Researched, cited cards | OpenWork Cloud + one authorized source | island shows **No sources** |
+| Starting a thread | your explicit confirmation | refused, every time |
+
 ## What is not proven yet
 
 **Connected-source research.** Station's Slack, Gmail, and Calendar queries go

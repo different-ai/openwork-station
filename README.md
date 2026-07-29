@@ -13,6 +13,17 @@ from OpenWork, uses no monorepo path aliases, and reaches the host only through
 the versioned capability broker. If Station can be built this way, so can
 anything else.
 
+## Requirements
+
+Station works in layers, and each one works on its own. In short: installing
+needs nothing, turning it on needs an `OPENAI_API_KEY` that OpenWork holds on
+your behalf, listening needs macOS microphone permission, and researched cards
+need OpenWork Cloud with at least one authorized source.
+
+[**REQUIREMENTS.md**](REQUIREMENTS.md) says exactly what each layer needs, what
+you see when you have it, and what you see when you do not — including why
+**No sources** and **Nothing yet** are deliberately different messages.
+
 ## Status
 
 Early. This repository currently contains the manifest, the portable core, and
