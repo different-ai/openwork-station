@@ -2,13 +2,13 @@
   "name": "openwork-station",
   "version": "0.1.0",
   "private": true,
-  "description": "OpenWork Station — an ambient assistant, distributed as an OpenWork App.",
+  "description": "OpenWork Station \u2014 an ambient assistant, distributed as an OpenWork App.",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.background.config.ts",
     "validate": "openwork-app validate openwork.app.json",
     "package": "node scripts/package.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm validate"
