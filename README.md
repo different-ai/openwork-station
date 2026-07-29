@@ -26,13 +26,19 @@ you see when you have it, and what you see when you do not — including why
 
 ## Status
 
-Early. This repository currently contains the manifest, the portable core, and
-its tests. The realtime surface and background runtime are being ported from the
-original in-tree prototype. Track the platform work in
-[different-ai/openwork#3303](https://github.com/different-ai/openwork/pull/3303).
+Early, but installable. [**v0.1.0**](https://github.com/different-ai/openwork-station/releases/tag/v0.1.0)
+is published, and OpenWork installs it from this repository's URL — that path is
+proven end to end against the real release.
 
-There is no published release yet, so OpenWork cannot install Station from this
-repository today. That is the next milestone, not a claim already met.
+The host platform that installs it is in review as
+[different-ai/openwork#3313](https://github.com/different-ai/openwork/pull/3313)
+and is not on `dev` yet, so you need a checkout of that branch. See
+[LOCAL-TESTING.md](LOCAL-TESTING.md).
+
+What is **not** proven: researched cards from live Slack, Gmail, or Calendar.
+That needs OpenWork Cloud with an authorized source, and until then Station
+correctly reports **No sources** rather than inventing one. See
+[REQUIREMENTS.md](REQUIREMENTS.md).
 
 ## What Station asks for, and why
 
@@ -120,10 +126,9 @@ openwork-app pack --root . --out dist/openwork-station-0.1.0.owapp \
   --tag v0.1.0 --commit "$(git rev-parse HEAD)"
 ```
 
-Those tools live in
-[`packages/app-tools`](https://github.com/different-ai/openwork/tree/dev/packages/app-tools)
-and are not yet published to npm; until they are, run them from an OpenWork
-checkout.
+Those tools are workspace packages in OpenWork and are **not published to npm**.
+Run them from a local OpenWork checkout — `scripts/package.mjs` finds them via
+`--tools` or `OPENWORK_REPO`, and says where it looked if it cannot.
 
 ## License
 
