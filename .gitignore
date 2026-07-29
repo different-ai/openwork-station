@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.owapp
+*.owapp.sha256
+.DS_Store
+.env
+.env.local
