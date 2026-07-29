@@ -3,6 +3,7 @@ import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 // Build the release package.
@@ -37,9 +38,41 @@ const outDir = resolve(root, args.get("out-dir") ?? "release")
 const assetName = manifest.distribution.asset.replaceAll("{version}", version)
 const out = join(outDir, assetName)
 
-const tools =
-  args.get("tools") ??
-  join(root, "..", "openwork", "packages", "app-tools", "bin", "openwork-app.mjs")
+// The app tools come from a local OpenWork checkout, not from npm — they are
+// workspace packages and deliberately unpublished. Candidate locations, in
+// order: an explicit --tools path, OPENWORK_REPO, the sibling checkout, then the
+// worktree the platform branch lives in.
+const toolCandidates = [
+  args.get("tools"),
+  process.env.OPENWORK_REPO
+    ? join(process.env.OPENWORK_REPO, "packages", "app-tools", "bin", "openwork-app.mjs")
+    : null,
+  join(root, "..", "openwork", "packages", "app-tools", "bin", "openwork-app.mjs"),
+  join(root, "..", "openwork-apps", "packages", "app-tools", "bin", "openwork-app.mjs"),
+].filter((entry) => typeof entry === "string" && entry.length > 0)
+
+const tools = toolCandidates.find((candidate) => existsSync(candidate))
+if (!tools) {
+  process.stderr.write(
+    [
+      "Could not find the OpenWork app tools.",
+      "",
+      "They live in an OpenWork checkout with the Apps platform branch, and are",
+      "not published to npm. Point at one of:",
+      "",
+      "  node scripts/package.mjs --tools /path/to/openwork/packages/app-tools/bin/openwork-app.mjs",
+      "  OPENWORK_REPO=/path/to/openwork node scripts/package.mjs",
+      "",
+      "Looked in:",
+      ...toolCandidates.map((candidate) => `  ${candidate}`),
+      "",
+      "Build them first with:",
+      "  pnpm --filter @openwork/app-contract build && pnpm --filter @openwork/app-tools build",
+      "",
+    ].join("\n"),
+  )
+  process.exit(1)
+}
 
 const staging = await mkdtemp(join(tmpdir(), "openwork-station-pkg-"))
 try {
