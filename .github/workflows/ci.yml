@@ -45,16 +45,26 @@ jobs:
             packages/app-contract
             packages/app-tools
 
+      # The app tools have not landed on OpenWork `dev` yet — they are in
+      # different-ai/openwork#3303. Until that merges this step reports that it
+      # cannot run, loudly and by name, rather than failing opaquely or passing
+      # while having validated nothing.
       - name: Validate and package
         run: |
+          TOOLS=.openwork/packages/app-tools/bin/openwork-app.mjs
+          if [ ! -f "$TOOLS" ]; then
+            echo "::warning title=Packaging skipped::The OpenWork app tools are not on dev yet (different-ai/openwork#3303). Station's own typecheck, tests, and build ran; the manifest was NOT validated and no package was produced."
+            exit 0
+          fi
           cd .openwork
           pnpm install --filter @openwork/app-contract --filter @openwork/app-tools
           pnpm --filter @openwork/app-contract build
           pnpm --filter @openwork/app-tools build
           cd ..
-          node scripts/package.mjs --tools .openwork/packages/app-tools/bin/openwork-app.mjs
+          node scripts/package.mjs --tools "$TOOLS"
 
       - uses: actions/upload-artifact@v4
+        if: hashFiles('release/*.owapp') != ''
         with:
           name: openwork-station-package
           path: release/
