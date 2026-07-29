@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Typecheck, test, build, validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+      # Validate with the same canonical validator OpenWork installs with, from
+      # the OpenWork checkout, so a manifest that passes here is one the host
+      # will accept. A separate validator would drift, and a drifted validator
+      # is how an app ships asking for something the review screen never showed.
+      - name: Check out OpenWork for the app tools
+        uses: actions/checkout@v4
+        with:
+          repository: different-ai/openwork
+          ref: dev
+          path: .openwork
+          sparse-checkout: |
+            packages/app-contract
+            packages/app-tools
+
+      - name: Validate and package
+        run: |
+          cd .openwork
+          pnpm install --filter @openwork/app-contract --filter @openwork/app-tools
+          pnpm --filter @openwork/app-contract build
+          pnpm --filter @openwork/app-tools build
+          cd ..
+          node scripts/package.mjs --tools .openwork/packages/app-tools/bin/openwork-app.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openwork-station-package
+          path: release/

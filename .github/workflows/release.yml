@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+# The package records the commit it was built from, and the host checks that
+# against the commit the release tag resolves to. Building from anything other
+# than the tagged commit produces a package that warns on every install.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish the package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck && pnpm test && pnpm build
+
+      - name: Check out OpenWork for the app tools
+        uses: actions/checkout@v4
+        with:
+          repository: different-ai/openwork
+          ref: dev
+          path: .openwork
+          sparse-checkout: |
+            packages/app-contract
+            packages/app-tools
+
+      - name: Refuse a tag that disagrees with the manifest version
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./openwork.app.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$MANIFEST_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match manifest version $MANIFEST_VERSION" >&2
+            exit 1
+          fi
+
+      - name: Build and verify the package
+        run: |
+          cd .openwork
+          pnpm install --filter @openwork/app-contract --filter @openwork/app-tools
+          pnpm --filter @openwork/app-contract build
+          pnpm --filter @openwork/app-tools build
+          cd ..
+          node scripts/package.mjs \
+            --tools .openwork/packages/app-tools/bin/openwork-app.mjs \
+            --tag "$GITHUB_REF_NAME" \
+            --commit "$GITHUB_SHA"
+
+      - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" release/* --clobber
